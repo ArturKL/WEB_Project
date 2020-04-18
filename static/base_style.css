@@ -1,15 +1,30 @@
 #logo-main{
     display: block;
-    margin-left: auto;
-    margin-right: auto;
-    width: 200px;
+    height: 72px;
 }
 
-ul.navbar-nav{
-    margin-left: auto;
-    margin-right: auto;
-}
-
-footer, .navbar, header>.container-fluid{
+.main-color{
     background-color: #F7F0ED;
+}
+
+.h-center{
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.v-center{
+    margin-top: auto;
+    margin-bottom: auto;
+}
+
+label.required:after
+{
+    color: red;
+    content: " *";
+}
+.t-center{
+    text-align: center;
+}
+nav{
+    font-size: larger;
 }
