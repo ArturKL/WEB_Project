@@ -5,11 +5,11 @@
     width: 200px;
 }
 
-header>.container-fluid{
-    background-color: #F8F9FA;
-}
-
 ul.navbar-nav{
     margin-left: auto;
     margin-right: auto;
+}
+
+footer, .navbar, header>.container-fluid{
+    background-color: #F7F0ED;
 }
