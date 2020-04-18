@@ -1,0 +1,15 @@
+#logo-main{
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    width: 200px;
+}
+
+header>.container-fluid{
+    background-color: #F8F9FA;
+}
+
+ul.navbar-nav{
+    margin-left: auto;
+    margin-right: auto;
+}
