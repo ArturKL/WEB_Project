@@ -1,6 +1,6 @@
 #logo-main{
     display: block;
-    height: 72px;
+    height: 144px;
 }
 
 .main-color{
@@ -28,3 +28,6 @@ label.required:after
 nav{
     font-size: larger;
 }
+.checked {
+    color: orange;
+  }

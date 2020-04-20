@@ -3,7 +3,9 @@ from flask_restful import abort, Api, Resource, reqparse
 from data import db_session
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from data.users import User
+from data.reviews import Review
 from data.forms import *
+import datetime
 
 
 app = Flask(__name__)
@@ -27,7 +29,9 @@ def main_page():
 
 @app.route('/feedback')
 def feedback():
-    return render_template('feedback.html', title='Отзывы')
+    session = db_session.create_session()
+    reviews = session.query(Review).all()
+    return render_template('feedback.html', title='Отзывы', reviews=reviews)
 
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -59,8 +63,6 @@ def login():
     if form.validate_on_submit():
         session = db_session.create_session()
         user = session.query(User).filter(User.email == form.email.data).first()
-        print(user.email)
-        print(user)
         if user and user.check_password(form.password.data):
             login_user(user)
             return redirect('/feedback')
@@ -73,6 +75,21 @@ def login():
 def logout():
     logout_user()
     return redirect('/feedback')
+
+
+def feel_db():
+    session = db_session.create_session()
+    for i in range(1, 6):
+        review = Review()
+        review.user_id = 1
+        review.user_name = session.query(User).filter(User.id == 1).first().name
+        review.user_surname = session.query(User).filter(User.id == 1).first().surname
+        review.rating = i
+        review.content = 'Lorem ipsum dolor sit amet consectetur, adipisicing elit. Quisquam ipsam fugiat natus ' \
+                         'tempora molestias illo quis provident quod, maiores doloremque?'
+        review.date = datetime.date.today()
+        session.add(review)
+    session.commit()
 
 
 if __name__ == '__main__':
