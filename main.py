@@ -1,13 +1,16 @@
-from flask import Flask, render_template, url_for, redirect
+from flask import Flask, render_template, url_for, redirect, request
 from flask_restful import abort, Api, Resource, reqparse
 from data import db_session
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from data.users import User
 from data.reviews import Review
+from data.albums import Album
 from data.forms import *
 import datetime
 from reviews_resourses import ReviewsResource, ReviewsListResource
-
+from transliterate import translit
+import os
+import shutil
 
 app = Flask(__name__)
 api = Api(app)
@@ -15,6 +18,19 @@ app.config['SECRET_KEY'] = 'randomstring'
 
 login_manager = LoginManager()
 login_manager.init_app(app)
+
+
+def ru_to_en(text):
+    trans = translit(text, 'ru', reversed=True)
+    trans = trans.replace(' ', '-')
+    trans = trans.replace('\'', '').lower()
+    return trans
+
+
+def get_albums():
+    session = db_session.create_session()
+    list_albums = session.query(Album).all()
+    return list_albums
 
 
 @login_manager.user_loader
@@ -25,14 +41,14 @@ def load_user(user_id):
 
 @app.route('/')
 def main_page():
-    return render_template('main_page.html', title='Главная')
+    return render_template('main_page.html', title='Главная', albums=get_albums())
 
 
 @app.route('/feedback')
 def feedback():
     session = db_session.create_session()
     reviews = session.query(Review).all()[::-1]
-    return render_template('feedback.html', title='Отзывы', reviews=reviews)
+    return render_template('feedback.html', title='Отзывы', reviews=reviews, albums=get_albums())
 
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -55,7 +71,7 @@ def register():
         session.add(user)
         session.commit()
         return redirect('/login')
-    return render_template('register.html', title='Регистрация', form=form)
+    return render_template('register.html', title='Регистрация', form=form, albums=get_albums())
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -68,8 +84,8 @@ def login():
             login_user(user)
             return redirect('/feedback')
         return render_template('login.html', title='Вход', form=form,
-                               message='Неверный логин или пароль')
-    return render_template('login.html', title='Вход', form=form)
+                               message='Неверный логин или пароль', albums=get_albums())
+    return render_template('login.html', title='Вход', form=form, albums=get_albums())
 
 
 @app.route('/logout')
@@ -94,7 +110,7 @@ def review_form():
         session.commit()
         return redirect('/feedback')
     else:
-        return render_template('review_form.html', form=form)
+        return render_template('review_form.html', form=form, albums=get_albums())
 
 
 @app.route('/review/edit/<int:id>', methods=['GET', 'POST'])
@@ -112,7 +128,7 @@ def edit_review(id):
     else:
         form.rating.data = review.rating
         form.content.data = review.content
-        return render_template('review_form.html', title='Изменить отзыв', form=form)
+        return render_template('review_form.html', title='Изменить отзыв', form=form, albums=get_albums())
 
 
 @app.route('/review/delete/<int:id>', methods=['GET', 'POST'])
@@ -125,22 +141,74 @@ def delete_review(id):
         session.commit()
         return redirect('/feedback')
     else:
-        return render_template('404.html', title='Ошибка 404')
+        return render_template('404.html', title='Ошибка 404', albums=get_albums())
 
 
-def feel_db():
+@app.route('/albums/<album_name>')
+def albums(album_name):
     session = db_session.create_session()
-    for i in range(1, 6):
-        review = Review()
-        review.user_id = 1
-        review.user_name = session.query(User).filter(User.id == 1).first().name
-        review.user_surname = session.query(User).filter(User.id == 1).first().surname
-        review.rating = i
-        review.content = 'Lorem ipsum dolor sit amet consectetur, adipisicing elit. Quisquam ipsam fugiat natus ' \
-                         'tempora molestias illo quis provident quod, maiores doloremque?'
-        review.date = datetime.date.today()
-        session.add(review)
-    session.commit()
+    album = session.query(Album).filter(Album.translit_name == album_name).first()
+    if album:
+        return render_template('album_view.html', title=album.name, album=album, albums=get_albums())
+    else:
+        abort(404)
+
+
+@app.route('/albums/upload', methods=['GET', 'POST'])
+def upload():
+    if current_user.id == 1:
+        form = AlbumForm()
+        session = db_session.create_session()
+        if form.validate_on_submit():
+            album = session.query(Album).filter(Album.name == form.name.data).first()
+            if album:
+                return render_template('album_form.html', title='Загрузить альбом',
+                                       form=form, message='Такой альбом уже существует')
+            album = Album()
+            album.name = form.name.data
+            album.translit_name = ru_to_en(album.name)
+            album.lenght = len(form.photos.data)
+            os.mkdir(f'static/albums/{album.translit_name}')
+            for file in form.photos.data:
+                file.save(os.path.join(f'static/albums/{album.translit_name}', file.filename))
+            session.add(album)
+            session.commit()
+            return redirect(f'/albums/{album.translit_name}')
+        return render_template('album_form.html', title='Загрузить альбом', form=form, albums=get_albums())
+    abort(404)
+
+
+@app.route('/albums/edit/<name>', methods=['GET', 'POST'])
+def edit_album(name):
+    if current_user.id == 1:
+        form = AlbumForm()
+        session = db_session.create_session()
+        album = session.query(Album).filter(Album.translit_name == name).first()
+        if not album:
+            abort(404)
+        if form.validate_on_submit():
+            album.name = form.name.data
+            for file in form.photos.data:
+                file.save(os.path.join(f'static/albums/{album.translit_name}', file.filename))
+            album.lenght += len(form.photos.data)
+            session.commit()
+            return redirect(f'/albums/{name}')
+        form.name.data = album.name
+        return render_template('album_form.html', title='Редактировать альбом', form=form, albums=get_albums())
+    abort(404)
+
+
+@app.route('/albums/delete/<name>')
+def delete_album(name):
+    if current_user.id == 1:
+        session = db_session.create_session()
+        album = session.query(Album).filter(Album.translit_name == name).first()
+        if album:
+            shutil.rmtree(os.path.join('static/albums', name))
+            session.delete(album)
+            session.commit()
+            return redirect('/')
+    abort(404)
 
 
 if __name__ == '__main__':

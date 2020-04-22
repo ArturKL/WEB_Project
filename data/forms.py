@@ -26,3 +26,10 @@ class ReviewForm(FlaskForm):
         DataRequired()])
     content = TextAreaField('Отзыв', validators=[Length(max=500, message='Максимальный размер отзыва - 500 символов')])
     submit = SubmitField('Оставить отзыв')
+
+
+class AlbumForm(FlaskForm):
+    name = StringField('Название', validators=[DataRequired()])
+    photos = MultipleFileField('Загрузить фото', validators=[DataRequired()])
+    submit = SubmitField('Сохранить')
+
