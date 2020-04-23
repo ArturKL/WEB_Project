@@ -1,4 +1,4 @@
-{% extends 'ui.html' %}
+{% extends 'base.html' %}
 {% block primary_content %}
 <div class="container">
     <h1>Загрузить альбом</h1>
@@ -18,7 +18,7 @@
             {% endfor %}
         </p>
         <p>
-            {{ form.photos.label(class="required") }}<br>
+            {{ form.photos.label() }}<br>
             {{ form.photos(class="form-control-file", type="file") }}<br>
             {% for error in form.photos.errors %}
                 <p class="alert alert-danger" role="alert">

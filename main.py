@@ -82,7 +82,7 @@ def login():
         user = session.query(User).filter(User.email == form.email.data).first()
         if user and user.check_password(form.password.data):
             login_user(user)
-            return redirect('/feedback')
+            return redirect('/')
         return render_template('login.html', title='Вход', form=form,
                                message='Неверный логин или пароль', albums=get_albums())
     return render_template('login.html', title='Вход', form=form, albums=get_albums())
@@ -91,7 +91,7 @@ def login():
 @app.route('/logout')
 def logout():
     logout_user()
-    return redirect('/feedback')
+    return redirect('/')
 
 
 @app.route('/review_form', methods=['GET', 'POST'])
@@ -169,8 +169,8 @@ def upload():
             album.translit_name = ru_to_en(album.name)
             album.lenght = len(form.photos.data)
             os.mkdir(f'static/albums/{album.translit_name}')
-            for file in form.photos.data:
-                file.save(os.path.join(f'static/albums/{album.translit_name}', file.filename))
+            for i, file in enumerate(form.photos.data):
+                file.save(os.path.join(f'static/albums/{album.translit_name}',  f'{i}.jpg'))
             session.add(album)
             session.commit()
             return redirect(f'/albums/{album.translit_name}')
@@ -188,8 +188,8 @@ def edit_album(name):
             abort(404)
         if form.validate_on_submit():
             album.name = form.name.data
-            for file in form.photos.data:
-                file.save(os.path.join(f'static/albums/{album.translit_name}', file.filename))
+            for i, file in enumerate(form.photos.data, start=album.lenght):
+                file.save(os.path.join(f'static/albums/{album.translit_name}', f'{i}.jpg'))
             album.lenght += len(form.photos.data)
             session.commit()
             return redirect(f'/albums/{name}')

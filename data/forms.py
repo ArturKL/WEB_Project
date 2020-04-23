@@ -30,6 +30,6 @@ class ReviewForm(FlaskForm):
 
 class AlbumForm(FlaskForm):
     name = StringField('Название', validators=[DataRequired()])
-    photos = MultipleFileField('Загрузить фото', validators=[DataRequired()])
+    photos = MultipleFileField('Загрузить фото')
     submit = SubmitField('Сохранить')
 

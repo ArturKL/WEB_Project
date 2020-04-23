@@ -1,5 +1,6 @@
-{% extends "ui.html" %}
+{% extends "base.html" %}
 {% block primary_content %}
+<br>
 <div class="container">
     {% if current_user.is_authenticated %}
         <a href="/review_form" class="btn btn-warning">Новый отзыв</a><br><br>
