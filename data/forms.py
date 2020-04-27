@@ -1,7 +1,7 @@
 from flask_wtf import FlaskForm
 from wtforms import *
 from wtforms.validators import DataRequired, Length, Email
-from wtforms.fields.html5 import EmailField, IntegerField
+from wtforms.fields.html5 import EmailField, IntegerField, TelField
 
 
 class RegisterForm(FlaskForm):
@@ -33,3 +33,14 @@ class AlbumForm(FlaskForm):
     photos = MultipleFileField('Загрузить фото')
     submit = SubmitField('Сохранить')
 
+
+class BookingForm(FlaskForm):
+    name = StringField('Имя', validators=[DataRequired()])
+    surname = StringField('Фамилия', validators=[DataRequired()])
+    tel = TelField('Номер телефона', validators=[DataRequired()])
+    type = SelectField('Тип фотосессии', choices=[('Минимальная', 'Минимальная'),
+                                                  ('Оптимальная', 'Оптимальная'),
+                                                  ('Премиальная', 'Премиальная')], validators=[DataRequired()])
+    date = DateField('Дата')
+    content = TextAreaField('Сообщение')
+    submit = SubmitField('Отправить')

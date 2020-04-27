@@ -19,7 +19,7 @@
             </p>
             <p>
                 {{ form.content.label }}<br>
-                {{ form.content(class="form-control", type="password") }}<br>
+                {{ form.content(class="form-control", type="textarea") }}<br>
                 {% for error in form.content.errors %}
                     <p class="alert alert-danger" role="alert">
                         {{ error }}
